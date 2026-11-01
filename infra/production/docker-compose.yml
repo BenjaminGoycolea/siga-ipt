@@ -1,0 +1,64 @@
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Set DB_NAME in infra/production/.env}
+      POSTGRES_USER: ${DB_USERNAME:?Set DB_USERNAME in infra/production/.env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in infra/production/.env}
+    volumes:
+      - siga_database_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - siga
+    restart: unless-stopped
+
+  backend:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in infra/production/.env}/siga-ipt:backend-${IMAGE_TAG:-latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://database:5432/${DB_NAME:?Set DB_NAME in infra/production/.env}
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME in infra/production/.env}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in infra/production/.env}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:?Set KEYCLOAK_ISSUER_URI in infra/production/.env}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:?Set KEYCLOAK_JWK_SET_URI in infra/production/.env}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - siga
+    deploy:
+      replicas: 3
+    restart: unless-stopped
+
+  frontend:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in infra/production/.env}/siga-ipt:frontend-${IMAGE_TAG:-latest}
+    networks:
+      - siga
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - siga
+    restart: unless-stopped
+
+networks:
+  siga:
+    driver: bridge
+
+volumes:
+  siga_database_data:
