@@ -9,7 +9,11 @@ La aplicación debe ser un monolito organizado por capas. Esto significa que fro
 ## 2. Estructura del repositorio
 
 ```text
+.github/
+  workflows/
+    cd.yml                 Verifica el proyecto y publica imágenes Docker en Docker Hub
 backend/
+  Dockerfile               Construcción de la imagen de producción del backend
   src/main/java/cl/ipt/siga/
     config/       Seguridad, autorización y configuración de la aplicación
     controller/   Endpoints REST; reciben solicitudes y producen respuestas
@@ -20,15 +24,28 @@ backend/
     service/      Reglas de negocio y coordinación de operaciones
   src/test/       Pruebas unitarias y de integración
 frontend/
+  Dockerfile               Construcción de la imagen de producción del frontend
+  Caddyfile                Servidor de archivos estáticos y fallback de React
   src/
     api/          Cliente HTTP y servicios para consumir la API
     components/   Componentes visuales reutilizables
     context/      Estado compartido, incluida la sesión
     pages/        Vistas de cada perfil y proceso
-docs/             Material de apoyo para desarrollo y presentación
+infra/
+  keycloak/                Keycloak y realm para desarrollo local
+  production/
+    docker-compose.yml     Servicios de producción: API, bases de datos, Keycloak y proxy
+    Caddyfile              HTTPS y enrutamiento por dominio
+    nginx.conf             Proxy interno a frontend y réplicas del backend
+    keycloak-realm/        Configuración inicial de realm y cliente web
+    .env.example           Plantilla de variables para el servidor
+docs/
+  guia-presentacion.md     Arquitectura, flujos y guion de presentación
+  despliegue-rapido.md     Comandos para iniciar, detener y actualizar AWS
+README.md                  Instrucciones generales del proyecto
 ```
 
-Las capas académicas incluyen entidades, repositorios, Controllers y Services para carreras, planes de estudio, asignaturas, estudiantes, docentes, períodos, secciones, inscripción, calificaciones e historial.
+Los archivos `.env` con valores reales son locales al entorno y no deben subirse al repositorio; solo se versionan las plantillas `.env.example`. Las capas académicas incluyen entidades, repositorios, Controllers y Services para carreras, planes de estudio, asignaturas, estudiantes, docentes, períodos, secciones, inscripción, calificaciones e historial.
 
 ## 3. Cómo explicar las capas
 
@@ -192,6 +209,6 @@ Al presentar, conviene abrir Swagger UI para mostrar la API, explicar una regla 
 - **Etapa 4 — inscripción académica:** identidad Keycloak, matrícula por período, oferta, inscripción/anulación y validación de reglas. Completa en backend.
 - **Etapa 5 — calificaciones y cierre:** registro de notas por el docente asignado, cierre con validación, actualización de estados e historial. Completa en backend.
 - **Etapa 6 — interfaz por rol y autorización completa:** portales de inscripción/historial, calificaciones y administración de carreras, planes, asignaturas, períodos, secciones y matrículas conectados a la API; navegación basada en roles y permisos verificados en backend.
-- **Etapa 7 — calidad y entrega:** cobertura de líneas de servicios ≥90% y matriz de al menos 18 escenarios de integración comprobadas con `mvn verify`. El workflow de GitHub Actions ya ejecuta la verificación y publica las imágenes del backend y frontend en Docker Hub solo después de pasar. Pendiente el despliegue manual en un servidor cloud y completar sus dominios, variables y secretos.
+- **Etapa 7 — calidad y entrega:** cobertura de líneas de servicios ≥90% y matriz de al menos 18 escenarios de integración comprobadas con `mvn verify`. GitHub Actions ejecuta la verificación y publica las imágenes del backend y frontend en Docker Hub solo después de pasar. El despliegue de demostración en AWS está activo con Docker Compose, dominios HTTPS y autenticación Keycloak.
 
 No se deben dar por completas las etapas futuras hasta que su implementación y pruebas estén presentes en el repositorio.
