@@ -1,0 +1,7 @@
+{$APP_DOMAIN} {
+    reverse_proxy nginx:80
+}
+
+{$AUTH_DOMAIN} {
+    reverse_proxy keycloak:8080
+}
