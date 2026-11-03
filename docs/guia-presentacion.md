@@ -37,9 +37,11 @@ infra/
     docker-compose.yml     Servicios de producción: API, bases de datos, Keycloak y proxy
     Caddyfile              HTTPS y enrutamiento por dominio
     nginx.conf             Proxy interno a frontend y réplicas del backend
+    demo-data.sql          Carga idempotente y opcional de registros ficticios para demo
     keycloak-realm/        Configuración inicial de realm y cliente web
     .env.example           Plantilla de variables para el servidor
 docs/
+  cargar-datos-demo.md     Instrucciones para cargar registros ficticios en AWS
   guia-presentacion.md     Arquitectura, flujos y guion de presentación
   despliegue-rapido.md     Comandos para iniciar, detener y actualizar AWS
 README.md                  Instrucciones generales del proyecto
