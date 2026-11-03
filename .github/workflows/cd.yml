@@ -47,6 +47,9 @@ jobs:
     needs: verify
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -54,23 +57,30 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Skip publish when Docker Hub credentials are missing
+        if: env.DOCKERHUB_USERNAME == '' || env.DOCKERHUB_TOKEN == ''
+        run: echo "Docker Hub credentials are not configured. Skipping image publish."
+
       - name: Log in to Docker Hub
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
       - name: Build and publish backend image
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/siga-ipt:backend-latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/siga-ipt:backend-${{ github.sha }}
+            ${{ env.DOCKERHUB_USERNAME }}/siga-ipt:backend-latest
+            ${{ env.DOCKERHUB_USERNAME }}/siga-ipt:backend-${{ github.sha }}
 
       - name: Build and publish frontend image
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
@@ -81,5 +91,5 @@ jobs:
             VITE_KEYCLOAK_REALM=${{ vars.VITE_KEYCLOAK_REALM }}
             VITE_KEYCLOAK_CLIENT_ID=${{ vars.VITE_KEYCLOAK_CLIENT_ID }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/siga-ipt:frontend-latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/siga-ipt:frontend-${{ github.sha }}
+            ${{ env.DOCKERHUB_USERNAME }}/siga-ipt:frontend-latest
+            ${{ env.DOCKERHUB_USERNAME }}/siga-ipt:frontend-${{ github.sha }}
